@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		49BEE2901D8F71C500844296 /* rfduino-swift.h in Headers */ = {isa = PBXBuildFile; fileRef = 49BEE28E1D8F71C500844296 /* rfduino-swift.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		49BEE29B1D8F721E00844296 /* .gitkeep in Resources */ = {isa = PBXBuildFile; fileRef = 49BEE2971D8F721E00844296 /* .gitkeep */; };
 		49BEE2A21D8F876700844296 /* RFDuino.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49BEE29F1D8F876700844296 /* RFDuino.swift */; };
 		49BEE2A31D8F876700844296 /* RFDuino+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49BEE2A01D8F876700844296 /* RFDuino+Utils.swift */; };
 		49BEE2A41D8F876700844296 /* RFDuinoBTManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49BEE2A11D8F876700844296 /* RFDuinoBTManager.swift */; };
@@ -18,7 +17,6 @@
 		49BEE28B1D8F71C500844296 /* rfduino_swift.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = rfduino_swift.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		49BEE28E1D8F71C500844296 /* rfduino-swift.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "rfduino-swift.h"; sourceTree = "<group>"; };
 		49BEE28F1D8F71C500844296 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		49BEE2971D8F721E00844296 /* .gitkeep */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = .gitkeep; sourceTree = "<group>"; };
 		49BEE29F1D8F876700844296 /* RFDuino.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RFDuino.swift; path = ../../../Pod/Classes/RFDuino.swift; sourceTree = "<group>"; };
 		49BEE2A01D8F876700844296 /* RFDuino+Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = "RFDuino+Utils.swift"; path = "../../../Pod/Classes/RFDuino+Utils.swift"; sourceTree = "<group>"; };
 		49BEE2A11D8F876700844296 /* RFDuinoBTManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = RFDuinoBTManager.swift; path = ../../../Pod/Classes/RFDuinoBTManager.swift; sourceTree = "<group>"; };
@@ -64,7 +62,6 @@
 		49BEE2961D8F721E00844296 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				49BEE2971D8F721E00844296 /* .gitkeep */,
 				49BEE29F1D8F876700844296 /* RFDuino.swift */,
 				49BEE2A01D8F876700844296 /* RFDuino+Utils.swift */,
 				49BEE2A11D8F876700844296 /* RFDuinoBTManager.swift */,
@@ -143,7 +140,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				49BEE29B1D8F721E00844296 /* .gitkeep in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
