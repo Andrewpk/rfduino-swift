@@ -10,28 +10,28 @@ import Foundation
 import CoreBluetooth
 
 @objc public protocol RFDuinoDelegate {
-    optional func rfDuinoDidTimeout(rfDuino: RFDuino)
-    optional func rfDuinoDidDisconnect(rfDuino: RFDuino)
-    optional func rfDuinoDidDiscover(rfDuino: RFDuino)
-    optional func rfDuinoDidDiscoverServices(rfDuino: RFDuino)
-    optional func rfDuinoDidDiscoverCharacteristics(rfDuino: RFDuino)
-    optional func rfDuinoDidSendData(rfDuino: RFDuino, forCharacteristic: CBCharacteristic, error: NSError?)
-    optional func rfDuinoDidReceiveData(rfDuino: RFDuino, data: NSData?)
+    @objc optional func rfDuinoDidTimeout(_ rfDuino: RFDuino)
+    @objc optional func rfDuinoDidDisconnect(_ rfDuino: RFDuino)
+    @objc optional func rfDuinoDidDiscover(_ rfDuino: RFDuino)
+    @objc optional func rfDuinoDidDiscoverServices(_ rfDuino: RFDuino)
+    @objc optional func rfDuinoDidDiscoverCharacteristics(_ rfDuino: RFDuino)
+    @objc optional func rfDuinoDidSendData(_ rfDuino: RFDuino, forCharacteristic: CBCharacteristic, error: NSError?)
+    @objc optional func rfDuinoDidReceiveData(_ rfDuino: RFDuino, data: Data?)
 }
 
-public class RFDuino: NSObject {
+open class RFDuino: NSObject {
     
-    public var isTimedOut = false
-    public var isConnected = false
-    public var didDiscoverCharacteristics = false
+    open var isTimedOut = false
+    open var isConnected = false
+    open var didDiscoverCharacteristics = false
     
-    public var delegate: RFDuinoDelegate?
-    public static let timeoutThreshold = 5.0
-    public var RSSI: NSNumber?
+    open var delegate: RFDuinoDelegate?
+    open static let timeoutThreshold = 5.0
+    open var RSSI: NSNumber?
     
     var whenDoneBlock: (() -> ())?
     var peripheral: CBPeripheral
-    var timeoutTimer: NSTimer?
+    var timeoutTimer: Timer?
     
     init(peripheral: CBPeripheral) {
         self.peripheral = peripheral
@@ -48,7 +48,7 @@ internal extension RFDuino {
         
         timeoutTimer?.invalidate()
         timeoutTimer = nil
-        timeoutTimer = NSTimer.scheduledTimerWithTimeInterval(RFDuino.timeoutThreshold, target: self, selector: Selector("didTimeout"), userInfo: nil, repeats: false)
+        timeoutTimer = Timer.scheduledTimer(timeInterval: RFDuino.timeoutThreshold, target: self, selector: #selector(RFDuino.didTimeout), userInfo: nil, repeats: false)
     }
     
     func didTimeout() {
@@ -71,11 +71,11 @@ internal extension RFDuino {
         delegate?.rfDuinoDidDisconnect?(self)
     }
     
-    func findCharacteristic(characteristicUUID characteristicUUID: RFDuinoUUID, forServiceWithUUID serviceUUID: RFDuinoUUID) -> CBCharacteristic? {
+    func findCharacteristic(characteristicUUID: RFDuinoUUID, forServiceWithUUID serviceUUID: RFDuinoUUID) -> CBCharacteristic? {
         if let discoveredServices = peripheral.services,
-            let service = (discoveredServices.filter { return $0.UUID == serviceUUID.id }).first,
+            let service = (discoveredServices.filter { return $0.uuid == serviceUUID.id }).first,
             let characteristics = service.characteristics {
-            return (characteristics.filter { return $0.UUID ==  characteristicUUID.id}).first
+            return (characteristics.filter { return $0.uuid ==  characteristicUUID.id}).first
         }
         return nil
     }
@@ -88,7 +88,7 @@ public extension RFDuino {
         peripheral.discoverServices([RFDuinoUUID.Discover.id])
     }
     
-    func sendDisconnectCommand(whenDone: () -> ()) {
+    func sendDisconnectCommand(_ whenDone: @escaping () -> ()) {
         self.whenDoneBlock = whenDone
         // if no services were discovered, imediately invoke done block
         if peripheral.services == nil {
@@ -97,14 +97,16 @@ public extension RFDuino {
         }
         if let characteristic = findCharacteristic(characteristicUUID: RFDuinoUUID.Disconnect, forServiceWithUUID: RFDuinoUUID.Discover) {
             var byte = UInt8(1)
-            let data = NSData(bytes: &byte, length: 1)
-            peripheral.writeValue(data, forCharacteristic: characteristic, type: .WithResponse)
+            let data = withUnsafeMutablePointer(to: &byte, {
+                Data(bytes: UnsafePointer($0), count: MemoryLayout.size(ofValue: byte))
+            })
+            peripheral.writeValue(data, for: characteristic, type: .withResponse)
         }
     }
     
-    func send(data: NSData) {
+    func send(_ data: Data) {
         if let characteristic = findCharacteristic(characteristicUUID: RFDuinoUUID.Send, forServiceWithUUID: RFDuinoUUID.Discover) {
-        	peripheral.writeValue(data, forCharacteristic: characteristic, type: .WithResponse)
+        	peripheral.writeValue(data, for: characteristic, type: .withResponse)
         }
     }
 }
@@ -120,38 +122,38 @@ public extension RFDuino {
 
 extension RFDuino: CBPeripheralDelegate {
     
-    public func peripheral(peripheral: CBPeripheral, didWriteValueForCharacteristic characteristic: CBCharacteristic, error: NSError?) {
+    public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         "Did send data to peripheral".log()
         
-        if characteristic.UUID == RFDuinoUUID.Disconnect.id {
+        if characteristic.uuid == RFDuinoUUID.Disconnect.id {
             if let doneBlock = whenDoneBlock {
                 doneBlock()
             }
         } else {
-            delegate?.rfDuinoDidSendData?(self, forCharacteristic: self.findCharacteristic(characteristicUUID: RFDuinoUUID.Send, forServiceWithUUID: RFDuinoUUID.Discover)!, error: error)
+            delegate?.rfDuinoDidSendData?(self, forCharacteristic: self.findCharacteristic(characteristicUUID: RFDuinoUUID.Send, forServiceWithUUID: RFDuinoUUID.Discover)!, error: error as NSError?)
         }
     }
     
-    public func peripheral(peripheral: CBPeripheral, didDiscoverServices error: NSError?) {
+    public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         "Did discover services".log()
         if let discoveredServices = peripheral.services {
             for service in discoveredServices {
-                if service.UUID == RFDuinoUUID.Discover.id {
-                    peripheral.discoverCharacteristics(nil, forService: service)
+                if service.uuid == RFDuinoUUID.Discover.id {
+                    peripheral.discoverCharacteristics(nil, for: service)
                 }
             }
         }
         delegate?.rfDuinoDidDiscoverServices?(self)
     }
     
-    public func peripheral(peripheral: CBPeripheral, didDiscoverCharacteristicsForService service: CBService, error: NSError?) {
+    public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         
         for characteristic in service.characteristics! {
-            ("did discover characteristic with UUID: " + characteristic.UUID.description).log()
-            if characteristic.UUID == RFDuinoUUID.Receive.id {
-                peripheral.setNotifyValue(true, forCharacteristic: characteristic)
-            } else if characteristic.UUID == RFDuinoUUID.Send.id {
-                peripheral.setNotifyValue(true, forCharacteristic: characteristic)
+            ("did discover characteristic with UUID: " + characteristic.uuid.description).log()
+            if characteristic.uuid == RFDuinoUUID.Receive.id {
+                peripheral.setNotifyValue(true, for: characteristic)
+            } else if characteristic.uuid == RFDuinoUUID.Send.id {
+                peripheral.setNotifyValue(true, for: characteristic)
             }
         }
         
@@ -159,7 +161,7 @@ extension RFDuino: CBPeripheralDelegate {
         delegate?.rfDuinoDidDiscoverCharacteristics?(self)
     }
     
-    public func peripheral(peripheral: CBPeripheral, didUpdateValueForCharacteristic characteristic: CBCharacteristic, error: NSError?) {
+    public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         "Did receive data for rfDuino".log()
         delegate?.rfDuinoDidReceiveData?(self, data: characteristic.value)
     }
